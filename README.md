@@ -33,3 +33,4 @@ Telegram Mini App faqat https manzilda ochiladi, shuning uchun to'liq sinov Rail
 - `src/receiptPdf.js` PDF chek + QR
 - `web/` React ilova (Vite)
 - `test/` `npm test` (birlik + API), `npm run test:e2e` (bot oqimi)
+# tizimerp
