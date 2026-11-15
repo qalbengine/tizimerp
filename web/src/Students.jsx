@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, post } from './api.js';
 import { fmt, Chips, Modal, Empty, notify } from './ui.jsx';
 import StudentSheet from './StudentSheet.jsx';
+import Register from './register.jsx';
 
 const FILTERS = [['all', 'Hammasi'], ['grouped', 'Guruhli'], ['ungrouped', 'Guruhsiz'], ['debtors', 'Qarzdor']];
 
@@ -66,6 +67,7 @@ export default function Students({ me }) {
   const [select, setSelect] = useState(false);
   const [sel, setSel] = useState([]);
   const [picker, setPicker] = useState(false);
+  const [reg, setReg] = useState(false);
   const timer = useRef();
 
   const load = () => {
@@ -85,12 +87,15 @@ export default function Students({ me }) {
     <div className="page">
       <div className="topbar">
         <input className="search" placeholder="Ism, telefon yoki #ID" value={q} onChange={(e) => setQ(e.target.value)} />
-        {admin && (
+      </div>
+      {admin && (
+        <div className="toolbar">
+          <button className="btn primary" onClick={() => setReg(true)}>+ Yangi o'quvchi</button>
           <button className={'btn' + (select ? ' primary' : '')} onClick={() => (select ? stopSelect() : setSelect(true))}>
             {select ? 'Bekor' : 'Belgilash'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
       <Chips items={FILTERS} value={filter} onChange={(f) => { setFilter(f); setSel([]); }} />
       {list && <div className="muted pad">Jami: {list.length}{list.length >= 300 ? '+' : ''}</div>}
 
@@ -117,6 +122,7 @@ export default function Students({ me }) {
       )}
 
       {picker && <GroupPicker ids={sel} onClose={() => setPicker(false)} onDone={() => { setPicker(false); stopSelect(); load(); }} />}
+      {reg && <Register onClose={() => setReg(false)} onChanged={load} onOpen={(id) => setOpenId(id)} />}
       {openId && <StudentSheet id={openId} me={me} onClose={() => setOpenId(null)} onChanged={load} />}
     </div>
   );

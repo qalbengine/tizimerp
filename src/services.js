@@ -35,6 +35,11 @@ async function registerStudent(actor, d) {
 
   const t = await prisma.tariff.findUnique({ where: { category } });
   if (!t) throw err('NO_TARIFF', 'Tarif topilmadi (seed ishga tushiring)');
+  if (groupId !== null && !(await prisma.group.findUnique({ where: { id: groupId } }))) throw err('NO_GROUP', 'Guruh topilmadi');
+  if (instructorId !== null) {
+    const ins = await prisma.instructor.findUnique({ where: { id: instructorId } });
+    if (!ins || !ins.active) throw err('NO_INSTRUCTOR', 'Instruktor topilmadi yoki faol emas');
+  }
   const amount = d.initialPayment;
   if (!Number.isInteger(amount) || amount < F.MIN_REGISTRATION_PAYMENT)
     throw err('MIN_PAYMENT', `Ro'yxat uchun kamida ${F.fmt(F.MIN_REGISTRATION_PAYMENT)} to'lanishi kerak`);
@@ -371,8 +376,61 @@ async function assignGroupMany(actor, studentIds, groupId) {
   });
 }
 
+// ---------- Tahrirlash ----------
+const CATEGORIES = ['B', 'BC', 'C', 'E'];
+const listTariffs = () => prisma.tariff.findMany({ orderBy: { category: 'asc' } });
+
+// patch: { fullName?, phone?, phone2?, category? }. Toifa o'zgarsa, tarif qayta qotadi (joriy tarif jadvalidan).
+async function updateStudent(actor, id, patch = {}) {
+  return prisma.$transaction(async (tx) => {
+    const s = await getStudent(id, tx);
+    const data = {};
+    const changes = {};
+
+    if (patch.fullName !== undefined) {
+      const n = String(patch.fullName).trim();
+      if (n.length < 5) throw err('BAD_NAME', "F.I.O. to'liq emas");
+      if (n !== s.fullName) { data.fullName = n; changes.fullName = [s.fullName, n]; }
+    }
+
+    if (patch.phone !== undefined || patch.phone2 !== undefined) {
+      const ph1 = patch.phone !== undefined ? normPhone(patch.phone) : s.phone;
+      const ph2 = patch.phone2 !== undefined ? normPhone(patch.phone2 || '') : (s.phone2 || '');
+      if (ph1.length < 9) throw err('BAD_PHONE', "Asosiy telefon noto'g'ri");
+      if (ph2.length < 9) throw err('BAD_PHONE2', "Qo'shimcha telefon noto'g'ri");
+      if (ph1 === ph2) throw err('SAME_PHONE', "Ikkita telefon har xil bo'lishi kerak");
+      if (ph1 !== s.phone || ph2 !== s.phone2) {
+        const clash = (await tx.student.findMany({
+          where: { deletedAt: null, OR: [{ phone: { in: [ph1, ph2] } }, { phone2: { in: [ph1, ph2] } }] },
+        })).find((x) => x.id !== s.id);
+        if (clash) throw err('DUPLICATE_PHONE', `Bu telefon allaqachon bor: ${clash.fullName} (#${clash.id})`);
+        if (ph1 !== s.phone) { data.phone = ph1; changes.phone = [s.phone, ph1]; }
+        if (ph2 !== s.phone2) { data.phone2 = ph2; changes.phone2 = [s.phone2, ph2]; }
+      }
+    }
+
+    if (patch.category !== undefined && patch.category !== s.category) {
+      if (!CATEGORIES.includes(patch.category)) throw err('BAD_CATEGORY', "Toifa noto'g'ri");
+      if (s.instructorPaid) throw err('LOCKED', "Instruktor ulushi to'langan, toifani o'zgartirib bo'lmaydi");
+      const t = await tx.tariff.findUnique({ where: { category: patch.category } });
+      if (!t) throw err('NO_TARIFF', 'Tarif topilmadi');
+      const next = { ...s, total: t.total, extStage1: t.extStage1, extStage2: t.extStage2, instructorShare: t.instructorShare };
+      const c = F.calc(next, s.payments);
+      if (c.rest < 0 || c.net < c.paid) throw err('TOO_BIG', "Yangi toifa tarifi to'langan summa yoki chegirmaga sig'maydi");
+      if (s.externalTransferred > c.extReceived) throw err('LOCKED', "Tashqariga o'tkazilgan summa yangi tarifdan katta");
+      Object.assign(data, { category: patch.category, total: t.total, extStage1: t.extStage1, extStage2: t.extStage2, instructorShare: t.instructorShare });
+      changes.category = [s.category, patch.category];
+    }
+
+    if (!Object.keys(data).length) throw err('NO_CHANGE', "O'zgarish yo'q");
+    const u = await tx.student.update({ where: { id }, data });
+    await audit(tx, actor, 'STUDENT_EDIT', 'Student', id, changes);
+    return u;
+  });
+}
+
 module.exports = {
-  prisma, getPaymentFull, registerStudent, addPayment, cancelPayment, approveDoc, setDiscount, setStartDate,
+  prisma, getPaymentFull, updateStudent, listTariffs, registerStudent, addPayment, cancelPayment, approveDoc, setDiscount, setStartDate,
   setGroupStartDate, searchStudents, getStudentCard, addInstructor, listInstructors,
   getInstructorByTelegramId, assignInstructor, createGroup, listGroups, assignGroup,
   listGroupStudents, listStudents, listUngrouped, assignGroupMany, listByInstructor, instructorSummary, markInstructorPaid, transferExternal, deleteStudent, expiring, debtors, report, formatReport,

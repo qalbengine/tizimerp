@@ -7,6 +7,7 @@ const registerActions = require('./src/actions');
 const registerStudents = require('./src/students');
 const S = require('./src/services');
 const { createWeb } = require('./src/web');
+const Rem = require('./src/reminders');
 
 if (!process.env.BOT_TOKEN) throw new Error('BOT_TOKEN yo\'q (.env)');
 process.env.TZ = process.env.TZ || 'Asia/Tashkent';
@@ -65,15 +66,24 @@ bot.command('ilova', (ctx) => {
   return ctx.reply('Ilovani oching:', Markup.inlineKeyboard([[Markup.button.webApp('Ilovani ochish', WEBAPP_URL)]]));
 });
 
+// Eslatmani hozir ko'rish (admin)
+bot.command('eslatma', async (ctx) => {
+  if (ctx.state.role !== 'admin') return ctx.reply("Ruxsat yo'q");
+  const { admin } = await Rem.digests();
+  return ctx.reply(admin || "Eslatma yo'q: muddati yaqin, muddatli qarzdor yoki guruhsiz o'quvchi topilmadi");
+});
+
 if (require.main === module) {
   const port = Number(process.env.PORT) || 3000;
   const server = createWeb(bot).listen(port, () => console.log(`Web server: port ${port}`));
-  const stop = (sig) => { server.close(); bot.stop(sig); S.prisma.$disconnect(); };
+  let reminders = { stop() {} };
+  const stop = (sig) => { reminders.stop(); server.close(); bot.stop(sig); S.prisma.$disconnect(); };
   process.once('SIGINT', () => stop('SIGINT'));
   process.once('SIGTERM', () => stop('SIGTERM'));
 
   bot.launch({}, async () => {
     console.log('Bot: polling rejimi');
+    reminders = Rem.startReminders(bot);
     if (WEBAPP_URL) {
       try {
         await bot.telegram.setChatMenuButton({ menuButton: { type: 'web_app', text: 'Ilova', web_app: { url: WEBAPP_URL } } });

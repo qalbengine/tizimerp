@@ -45,6 +45,20 @@ function ymd(v) {
   return d;
 }
 
+// ---- Rasm yuklash (base64 -> Telegram file_id) ----
+const PHOTO_MAX = 5 * 1024 * 1024;
+function decodeImage(dataUrl) {
+  const m = String(dataUrl || '').match(/^data:image\/(?:jpeg|png);base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) throw err('BAD_IMAGE', "Rasm formati noto'g'ri");
+  const buf = Buffer.from(m[1], 'base64');
+  if (buf.length < 100 || buf.length > PHOTO_MAX) throw err('BAD_IMAGE', "Rasm hajmi noto'g'ri (ko'pi bilan 5 MB)");
+  const jpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+  const png = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+  if (!jpeg && !png) throw err('BAD_IMAGE', 'Fayl rasm emas');
+  return buf;
+}
+const pick = (obj, keys) => Object.fromEntries(keys.filter((k) => obj && obj[k] !== undefined).map((k) => [k, obj[k]]));
+
 // ---- DTO ----
 function studentDto(s, role, { light = false } = {}) {
   const c = F.calc(s, s.payments || []);
@@ -76,8 +90,12 @@ function createWeb(bot) {
   const app = express();
   app.disable('x-powered-by');
   app.set('json replacer', (k, v) => (typeof v === 'bigint' ? v.toString() : v));
-  app.use(express.json({ limit: '50kb' }));
+  const smallJson = express.json({ limit: '50kb' });
+  app.use((req, res, next) => (req.path === '/api/uploads/photo' ? next() : smallJson(req, res, next)));
   if (process.env.WEB_DEV === '1') console.warn('DIQQAT: WEB_DEV=1 (faqat lokal sinov uchun!)');
+
+  // Railway healthcheck uchun (autentifikatsiyasiz, hech narsa oshkor qilmaydi)
+  app.get('/health', (req, res) => res.json({ ok: true }));
 
   const api = express.Router();
   const h = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -149,6 +167,39 @@ function createWeb(bot) {
   api.post('/students/:id/assign-group', ...act((req) =>
     S.assignGroup(req.me.id, sid(req), req.body.groupId == null ? null : int(req.body.groupId, 'Guruh'))));
   api.delete('/students/:id', ...act((req) => S.deleteStudent(req.me.id, sid(req))));
+
+  // ---- Ro'yxatga olish, tahrirlash, tariflar, rasm yuklash ----
+  api.get('/tariffs', adminOnly, h(async (req, res) => {
+    res.json({ minPayment: F.MIN_REGISTRATION_PAYMENT, tariffs: await S.listTariffs() });
+  }));
+
+  // Rasm Telegram'ga yuboriladi (ARCHIVE_CHAT_ID yoki adminning o'z chati), qaytgan file_id saqlanadi
+  api.post('/uploads/photo', adminOnly, express.json({ limit: '8mb' }), h(async (req, res) => {
+    const kind = req.body && req.body.kind;
+    if (kind !== 'selfie' && kind !== 'passport') throw err('BAD_INPUT', "Rasm turi noto'g'ri");
+    const buf = decodeImage(req.body.data);
+    const chat = process.env.ARCHIVE_CHAT_ID || req.me.id;
+    const caption = `${kind === 'selfie' ? 'Selfi' : 'Pasport'} (ilovadan yuklandi)`;
+    const msg = await bot.telegram.sendPhoto(chat, { source: buf }, { caption });
+    const photos = (msg && msg.photo) || [];
+    if (!photos.length) throw err('UPLOAD_FAILED', 'Rasm saqlanmadi');
+    res.json({ fileId: photos[photos.length - 1].file_id });
+  }));
+
+  api.post('/students', adminOnly, h(async (req, res) => {
+    const b = req.body || {};
+    const r = await S.registerStudent(req.me.id, {
+      fullName: b.fullName, phone: b.phone, phone2: b.phone2, category: b.category,
+      groupId: b.groupId == null ? null : int(b.groupId, 'Guruh'),
+      instructorId: b.instructorId == null ? null : int(b.instructorId, 'Instruktor'),
+      selfieFileId: b.selfieFileId, passportFileId: b.passportFileId,
+      initialPayment: int(b.initialPayment, "To'lov"),
+    });
+    res.json({ id: r.student.id, fullName: r.student.fullName, paymentId: r.payment.id, debt: r.calc.debt, deadline: r.student.deadline });
+  }));
+
+  api.patch('/students/:id', ...act((req) =>
+    S.updateStudent(req.me.id, sid(req), pick(req.body, ['fullName', 'phone', 'phone2', 'category']))));
 
   api.post('/students/:id/send-photos', adminOnly, h(async (req, res) => {
     const s = await S.getStudentCard(sid(req));

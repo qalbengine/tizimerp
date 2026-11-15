@@ -32,13 +32,19 @@ export function PromptModal({ title, fields, submitText = 'Saqlash', onSubmit, o
       {fields.map((f) => (
         <label key={f.name} className="field">
           <span>{f.label}</span>
-          <input
-            type={f.type || 'text'}
-            inputMode={f.type === 'number' ? 'numeric' : undefined}
-            placeholder={f.placeholder || ''}
-            value={v[f.name]}
-            onChange={(e) => setV({ ...v, [f.name]: e.target.value })}
-          />
+          {f.type === 'select' ? (
+            <select value={v[f.name]} onChange={(e) => setV({ ...v, [f.name]: e.target.value })}>
+              {f.options.map(([val, text]) => <option key={val} value={val}>{text}</option>)}
+            </select>
+          ) : (
+            <input
+              type={f.type || 'text'}
+              inputMode={f.type === 'number' ? 'numeric' : undefined}
+              placeholder={f.placeholder || ''}
+              value={v[f.name]}
+              onChange={(e) => setV({ ...v, [f.name]: e.target.value })}
+            />
+          )}
         </label>
       ))}
       {err && <div className="err">{err}</div>}

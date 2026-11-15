@@ -91,6 +91,7 @@ export default function StudentSheet({ id, me, onClose, onChanged }) {
           <button className="btn primary" onClick={() => setDlg({ t: 'pay' })}>To'lov qo'shish</button>
           <button className="btn" disabled={s.docApproved}
             onClick={async () => { if (await confirmAsk('Hujjat tasdiqlandimi?')) run(() => post(`${base}/doc-approve`), 'Hujjat tasdiqlandi'); }}>Hujjat tasdiqlandi</button>
+          <button className="btn" onClick={() => setDlg({ t: 'edit' })}>Tahrirlash</button>
           <button className="btn" onClick={() => setDlg({ t: 'disc' })}>Chegirma</button>
           <button className="btn" onClick={() => setDlg({ t: 'start' })}>Boshlanish sanasi</button>
           <button className="btn" onClick={() => setDlg({ t: 'instr' })}>Instruktor</button>
@@ -108,6 +109,21 @@ export default function StudentSheet({ id, me, onClose, onChanged }) {
         <PromptModal title="To'lov qo'shish" onClose={close} submitText="Qabul qilish"
           fields={[{ name: 'amount', label: `Summa (qarz: ${fmt(s.debt)})`, type: 'number', placeholder: '500000' }]}
           onSubmit={async (v) => { const r = await post(`${base}/payments`, { amount: Number(v.amount) }); await changed(); return r; }} />
+      )}
+      {dlg && dlg.t === 'edit' && (
+        <PromptModal title="Ma'lumotlarni tahrirlash" onClose={close}
+          fields={[
+            { name: 'fullName', label: 'F.I.O.', value: s.fullName },
+            { name: 'phone', label: 'Telefon', type: 'tel', value: s.phone },
+            { name: 'phone2', label: "Qo'shimcha telefon", type: 'tel', value: s.phone2 || '' },
+            { name: 'category', label: 'Toifa (o\'zgarsa, tarif qayta qotadi)', type: 'select', value: s.category, options: [['B', 'B'], ['BC', 'BC'], ['C', 'C'], ['E', 'E']] },
+          ]}
+          onSubmit={async (v) => {
+            const patch = {};
+            ['fullName', 'phone', 'phone2', 'category'].forEach((k) => { if (String(v[k]).trim() !== String(s[k] || '')) patch[k] = v[k]; });
+            await api(base, { method: 'PATCH', body: patch });
+            await changed();
+          }} />
       )}
       {dlg && dlg.t === 'cancel' && (
         <PromptModal title={`Chek №${dlg.id} ni bekor qilish`} onClose={close} submitText="Bekor qilish"
