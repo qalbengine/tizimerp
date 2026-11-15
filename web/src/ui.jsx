@@ -71,4 +71,6 @@ export function Row({ label, value, strong }) {
   return <div className="kv"><span>{label}</span><span className={strong ? 'strong' : ''}>{value}</span></div>;
 }
 
-export function Empty({ text }) { return <div className="empty">{text}</div>; }
+export function Empty({ text, icon }) {
+  return <div className="empty">{icon && <div className="empty-icon">{icon}</div>}{text}</div>;
+}

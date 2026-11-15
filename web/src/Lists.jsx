@@ -20,11 +20,11 @@ export function Debts({ me }) {
   return (
     <div className="page">
       {admin && <Chips items={[['debtors', 'Qarzdorlar'], ['expiring', 'Muddati tugayotgan']]} value={mode} onChange={setMode} />}
-      {list === null ? <Empty text="Yuklanmoqda…" />
-        : list.length === 0 ? <Empty text={mode === 'debtors' ? "Qarzdor yo'q" : "7 kun ichida muddati tugaydigan o'quvchi yo'q"} />
+      {list && list.length > 0 && <div className="muted pad">{list.length} ta{mode === 'debtors' ? ` · jami ${fmt(total)} so'm` : ''}</div>}
+      {list === null ? <Empty text="Yuklanmoqda…" icon="⏳" />
+        : list.length === 0 ? <Empty icon="✅" text={mode === 'debtors' ? "Qarzdor yo'q" : "7 kun ichida muddati tugaydigan o'quvchi yo'q"} />
           : (
             <>
-              <div className="muted pad">{list.length} ta{mode === 'debtors' ? ` · jami ${fmt(total)} so'm` : ''}</div>
               {list.map((s) => (
                 <div key={s.id} className="card" onClick={() => setOpenId(s.id)}>
                   <div className="card-main">

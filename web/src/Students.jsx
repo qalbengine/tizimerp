@@ -5,16 +5,26 @@ import StudentSheet from './StudentSheet.jsx';
 
 const FILTERS = [['all', 'Hammasi'], ['grouped', 'Guruhli'], ['ungrouped', 'Guruhsiz'], ['debtors', 'Qarzdor']];
 
+// Karta: ism, toifa, guruh/instruktor, to'lov progressi, qarz (qizil) yoki to'langan (yashil)
 export function StudentCard({ s, onClick, checked }) {
+  const paidPct = s.net > 0 ? Math.min(100, Math.round((s.paid / s.net) * 100)) : 100;
+  const owes = s.debt > 0;
   return (
     <div className="card" onClick={onClick}>
       {checked !== undefined && <span className={'check' + (checked ? ' on' : '')}>{checked ? '✓' : ''}</span>}
       <div className="card-main">
-        <div className="card-title">{s.fullName} <span className="badge">{s.category}</span></div>
-        <div className="muted">{s.group ? s.group.name : 'Guruhsiz'}{s.instructor ? ` · ${s.instructor.name}` : ''}</div>
+        <div className="card-title">
+          {s.fullName} <span className="badge">{s.category}</span>
+        </div>
+        <div className="muted">
+          {s.group ? s.group.name : 'Guruhsiz'}
+          {s.instructor ? ` · ${s.instructor.name}` : ''}
+        </div>
+        <div className="progress"><div className={'progress-fg ' + (owes ? 'partial' : 'full')} style={{ width: paidPct + '%' }} /></div>
       </div>
-      <div className={'card-side' + (s.debt > 0 ? ' red' : ' green')}>
-        {s.debt > 0 ? fmt(s.debt) : "To'langan"}
+      <div className="card-side">
+        <div className={owes ? 'red' : 'green'}>{owes ? fmt(s.debt) : "To'langan"}</div>
+        {owes && s.dueNow > 0 && <div className="tag red-soft">muddatli</div>}
       </div>
     </div>
   );
@@ -82,12 +92,12 @@ export default function Students({ me }) {
         )}
       </div>
       <Chips items={FILTERS} value={filter} onChange={(f) => { setFilter(f); setSel([]); }} />
+      {list && <div className="muted pad">Jami: {list.length}{list.length >= 300 ? '+' : ''}</div>}
 
-      {list === null ? <Empty text="Yuklanmoqda…" />
-        : list.length === 0 ? <Empty text="O'quvchi topilmadi" />
+      {list === null ? <Empty text="Yuklanmoqda…" icon="⏳" />
+        : list.length === 0 ? <Empty text="O'quvchi topilmadi" icon="🔍" />
           : (
             <>
-              <div className="muted pad">Jami: {list.length}{list.length >= 300 ? '+' : ''}</div>
               {list.map((s) => (
                 <StudentCard key={s.id} s={s} checked={select ? sel.includes(s.id) : undefined}
                   onClick={() => (select ? toggle(s.id) : setOpenId(s.id))} />

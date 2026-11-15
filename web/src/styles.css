@@ -72,3 +72,22 @@ main { flex: 1; overflow-y: auto; padding-bottom: 8px; }
 .field span { display: block; font-size: 13px; color: var(--hint); margin-bottom: 4px; }
 .field input { width: 100%; padding: 11px 12px; border-radius: 10px; border: 0; background: var(--card); color: var(--fg); font-size: 16px; outline: none; }
 .err { margin-top: 10px; color: var(--red); font-size: 14px; }
+
+/* ---- UI yaxshilash ---- */
+.card { padding: 14px; margin-bottom: 10px; }
+.card-title { font-size: 16px; }
+.card-side { text-align: right; font-size: 17px; }
+.card-side .red { color: var(--red); }
+.card-side .green { color: var(--green); }
+.tag { display: inline-block; margin-top: 4px; font-size: 11px; padding: 2px 7px; border-radius: 8px; }
+.red-soft { background: rgba(217, 58, 58, .14); color: var(--red); }
+.progress { height: 5px; border-radius: 3px; background: rgba(128,128,128,.22); margin-top: 8px; overflow: hidden; }
+.progress-fg { height: 100%; border-radius: 3px; transition: width .3s; }
+.progress-fg.full { background: var(--green); }
+.progress-fg.partial { background: linear-gradient(90deg, var(--green), #e0a526); }
+.empty { padding: 40px 16px; }
+.empty-icon { font-size: 40px; margin-bottom: 8px; }
+.chip { transition: background .15s; }
+.tabs button { transition: color .15s; }
+.tabs button.on { font-weight: 700; }
+.muted.pad { font-size: 13px; }
