@@ -3,7 +3,7 @@ import { api, post } from './api.js';
 import { fmt, dmy, notify } from './ui.jsx';
 import { uploadPhoto } from './image.js';
 
-function PhotoField({ label, kind, capture, value, onChange }) {
+function PhotoField({ label, kind, value, onChange }) {
   const [st, setSt] = useState({ busy: false, preview: null, err: '' });
   async function pick(e) {
     const file = e.target.files && e.target.files[0];
@@ -26,7 +26,7 @@ function PhotoField({ label, kind, capture, value, onChange }) {
         {st.preview
           ? <img src={st.preview} alt="" />
           : <div className="photo-ph">{st.busy ? 'Yuklanmoqda…' : value ? '✓ Yuklangan' : '📷 Rasm olish yoki tanlash'}</div>}
-        <input type="file" accept="image/*" capture={capture} onChange={pick} hidden />
+        <input className="file-input" type="file" accept="image/*" onChange={pick} />
       </label>
       {value && !st.busy && <small className="muted">Almashtirish uchun rasmni bosing</small>}
       {st.err && <div className="err">{st.err}</div>}
@@ -109,8 +109,8 @@ export default function Register({ onClose, onChanged, onOpen }) {
               {cfg.tariffs.map((t) => <option key={t.category} value={t.category}>{t.category} · {fmt(t.total)} so'm</option>)}
             </select></label>
 
-          <PhotoField label="Selfi rasm" kind="selfie" capture="user" value={f.selfieFileId} onChange={(id) => setF((x) => ({ ...x, selfieFileId: id }))} />
-          <PhotoField label="Pasport rasmi" kind="passport" capture="environment" value={f.passportFileId} onChange={(id) => setF((x) => ({ ...x, passportFileId: id }))} />
+          <PhotoField label="Selfi rasm" kind="selfie" value={f.selfieFileId} onChange={(id) => setF((x) => ({ ...x, selfieFileId: id }))} />
+          <PhotoField label="Pasport rasmi" kind="passport" value={f.passportFileId} onChange={(id) => setF((x) => ({ ...x, passportFileId: id }))} />
 
           <label className="field"><span>Ro'yxat to'lovi (kamida {fmt(cfg.minPayment)})</span>
             <input type="number" inputMode="numeric" value={pay} onChange={(e) => setPay(e.target.value)} /></label>

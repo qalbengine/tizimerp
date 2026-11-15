@@ -7,7 +7,7 @@ export async function api(path, { method = 'GET', body } = {}) {
   else if (import.meta.env.VITE_DEV_USER) headers['x-dev-user'] = import.meta.env.VITE_DEV_USER;
   const r = await fetch('/api' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || 'Xato');
+  if (!r.ok) throw new Error(data.error || `Server xatosi (${r.status})`);
   return data;
 }
 

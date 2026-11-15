@@ -180,7 +180,14 @@ function createWeb(bot) {
     const buf = decodeImage(req.body.data);
     const chat = process.env.ARCHIVE_CHAT_ID || req.me.id;
     const caption = `${kind === 'selfie' ? 'Selfi' : 'Pasport'} (ilovadan yuklandi)`;
-    const msg = await bot.telegram.sendPhoto(chat, { source: buf }, { caption });
+    let msg;
+    try {
+      msg = await bot.telegram.sendPhoto(chat, { source: buf }, { caption });
+    } catch (e) {
+      const why = (e && (e.description || e.message)) || 'noma\'lum xato';
+      console.error('Rasm yuklash xatosi (chat:', chat, '):', why);
+      throw err('UPLOAD_FAILED', `Telegram rasmni qabul qilmadi: ${why}`);
+    }
     const photos = (msg && msg.photo) || [];
     if (!photos.length) throw err('UPLOAD_FAILED', 'Rasm saqlanmadi');
     res.json({ fileId: photos[photos.length - 1].file_id });
