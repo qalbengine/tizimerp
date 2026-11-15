@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  B
+  BC
+  C
+  E
+}
+
+enum StudentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum PaymentStatus {
+  ACTIVE
+  CANCELLED
+}
+
+// Tariflar (so'mda). O'quvchi ro'yxatga olinganda ulardan nusxa oladi.
+model Tariff {
+  category        Category @id
+  total           Int
+  extStage1       Int
+  extStage2       Int
+  instructorShare Int
+}
+
+model Instructor {
+  id         Int       @id @default(autoincrement())
+  telegramId BigInt    @unique
+  name       String
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  students   Student[]
+}
+
+model Group {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  students  Student[]
+}
+
+model Student {
+  id       Int           @id @default(autoincrement())
+  fullName String
+  phone    String
+  phone2   String?  // qo'shimcha telefon
+  selfieFileId   String? // Telegram file_id
+  passportFileId String? // Telegram file_id
+  category Category
+  status   StudentStatus @default(ACTIVE)
+
+  // Tarif snapshot (ro'yxat paytida qotadi)
+  total           Int
+  extStage1       Int
+  extStage2       Int
+  instructorShare Int
+
+  discount       Int     @default(0)
+  discountReason String?
+
+  docApproved   Boolean   @default(false)
+  docApprovedAt DateTime?
+
+  registeredAt DateTime  @default(now())
+  startDate    DateTime?
+  endDate      DateTime?
+  deadline     DateTime
+
+  externalTransferred Int       @default(0)
+  instructorPaid      Boolean   @default(false)
+  instructorPaidAt    DateTime?
+
+  groupId      Int?
+  group        Group?      @relation(fields: [groupId], references: [id])
+  instructorId Int?
+  instructor   Instructor? @relation(fields: [instructorId], references: [id])
+
+  payments  Payment[]
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([phone])
+  @@index([phone2])
+  @@index([deadline])
+  @@index([instructorId])
+  @@index([groupId])
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement()) // chek raqami
+  studentId Int
+  student   Student       @relation(fields: [studentId], references: [id])
+  amount    Int
+  paidAt    DateTime      @default(now())
+  status    PaymentStatus @default(ACTIVE)
+  note      String?
+  createdBy BigInt
+
+  cancelledAt  DateTime?
+  cancelledBy  BigInt?
+  cancelReason String?
+
+  @@index([studentId])
+  @@index([paidAt])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   BigInt
+  action    String
+  entity    String
+  entityId  Int?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
