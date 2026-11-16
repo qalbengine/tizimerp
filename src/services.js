@@ -129,6 +129,44 @@ async function setStartDate(actor, studentId, startDate) {
 }
 
 // Guruh to'lganda: guruhdagi hammaga bir sanani qo'yish
+// Guruh bo'yicha: tashqariga o'tkazilishi kerak bo'lgan hamma summani bitta amalda "o'tkazildi" deb belgilaydi
+async function transferGroup(actor, groupId) {
+  return prisma.$transaction(async (tx) => {
+    const list = await tx.student.findMany({ where: { groupId, deletedAt: null }, include: { payments: true } });
+    let amount = 0, students = 0;
+    for (const s of list) {
+      const due = F.calc(s, s.payments).extToTransfer;
+      if (due <= 0) continue;
+      await tx.student.update({ where: { id: s.id }, data: { externalTransferred: { increment: due } } });
+      await audit(tx, actor, 'EXT_TRANSFER', 'Student', s.id, { amount: due, group: groupId });
+      amount += due; students++;
+    }
+    return { amount, students };
+  });
+}
+
+// Guruhning to'liq hisobi
+async function groupSummary(groupId) {
+  const group = await prisma.group.findFirst({ where: { id: groupId } });
+  if (!group) throw err('NOT_FOUND', 'Guruh topilmadi');
+  const list = await prisma.student.findMany({ where: { groupId, deletedAt: null }, include: { payments: true } });
+  const now = new Date();
+  const r = { ...F.summarize(list), id: group.id, name: group.name, paidFull: 0, inDebt: 0, overdue: 0, noStart: 0,
+    startDate: null, endDate: null, deadline: null };
+  const max = (a, b) => (!a || (b && b > a) ? b : a);
+  const min = (a, b) => (!a || (b && b < a) ? b : a);
+  for (const s of list) {
+    const c = F.calc(s, s.payments);
+    if (c.debt === 0) r.paidFull++; else r.inDebt++;
+    if (c.debt > 0 && s.deadline && s.deadline < now) r.overdue++;
+    if (!s.startDate) r.noStart++;
+    r.startDate = min(r.startDate, s.startDate);
+    r.endDate = max(r.endDate, s.endDate);
+    r.deadline = max(r.deadline, s.deadline);
+  }
+  return r;
+}
+
 async function setGroupStartDate(actor, groupId, startDate) {
   const list = await prisma.student.findMany({ where: { groupId, deletedAt: null, startDate: null }, select: { id: true } });
   const out = { ok: 0, failed: [] };
@@ -434,5 +472,5 @@ module.exports = {
   prisma, getPaymentFull, updateStudent, listTariffs, registerStudent, addPayment, cancelPayment, approveDoc, setDiscount, setStartDate,
   setGroupStartDate, searchStudents, getStudentCard, addInstructor, listInstructors,
   getInstructorByTelegramId, assignInstructor, createGroup, listGroups, assignGroup,
-  listGroupStudents, listStudents, listUngrouped, assignGroupMany, listByInstructor, instructorSummary, markInstructorPaid, transferExternal, deleteStudent, expiring, debtors, report, formatReport,
+  listGroupStudents, transferGroup, groupSummary, listStudents, listUngrouped, assignGroupMany, listByInstructor, instructorSummary, markInstructorPaid, transferExternal, deleteStudent, expiring, debtors, report, formatReport,
 };

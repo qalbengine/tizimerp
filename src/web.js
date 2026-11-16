@@ -263,6 +263,8 @@ function createWeb(bot) {
     const list = await S.listGroupStudents(int(req.params.id, 'Guruh'));
     res.json(list.map((s) => studentDto(s, req.me.role, { light: true })));
   }));
+  api.get('/groups/:id/summary', adminOnly, h(async (req, res) => res.json(await S.groupSummary(int(req.params.id, 'Guruh')))));
+  api.post('/groups/:id/transfer', adminOnly, h(async (req, res) => res.json(await S.transferGroup(req.me.id, int(req.params.id, 'Guruh')))));
   api.post('/groups/:id/start-date', adminOnly, h(async (req, res) => {
     res.json(await S.setGroupStartDate(req.me.id, int(req.params.id, 'Guruh'), ymd(req.body.date)));
   }));

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, post } from './api.js';
-import { fmt, dmy, notify, Chips, Empty, PromptModal } from './ui.jsx';
+import { fmt, dmy, notify, confirmAsk, Chips, Empty, PromptModal, Row } from './ui.jsx';
 import StudentSheet from './StudentSheet.jsx';
 import { StudentCard } from './Students.jsx';
 
@@ -8,7 +8,20 @@ function GroupView({ g, me, onBack }) {
   const [list, setList] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [dlg, setDlg] = useState(false);
-  const load = () => api(`/groups/${g.id}/students`).then(setList).catch((e) => notify(e.message));
+  const [sum, setSum] = useState(null);
+  const load = () => {
+    api(`/groups/${g.id}/students`).then(setList).catch((e) => notify(e.message));
+    api(`/groups/${g.id}/summary`).then(setSum).catch((e) => notify(e.message));
+  };
+  const m = (n) => `${fmt(n)} so'm`;
+  async function transfer() {
+    if (!(await confirmAsk(`Guruhdan tashqariga ${m(sum.extBalance)} o'tkazildi deb belgilansinmi?`))) return;
+    try {
+      const r = await post(`/groups/${g.id}/transfer`);
+      notify(`Belgilandi: ${m(r.amount)} (${r.students} ta o'quvchi)`);
+      load();
+    } catch (e) { notify(e.message); }
+  }
   useEffect(() => { load(); }, []);
   return (
     <div className="page">
@@ -17,6 +30,28 @@ function GroupView({ g, me, onBack }) {
         <b>{g.name}</b>
         <button className="btn primary" onClick={() => setDlg(true)}>Boshlanish sanasi</button>
       </div>
+      {sum && (
+        <div className="block">
+          <div className="block-t">📊 Guruh hisobi</div>
+          <Row label="O'quvchilar" value={sum.count} />
+          <Row label="✅ To'liq to'laganlar" value={sum.paidFull} />
+          <Row label="🔻 Qarzdorlar" value={`${sum.inDebt}${sum.overdue ? ` (muddati o'tgan: ${sum.overdue})` : ''}`} />
+          <Row label="Qarz jami" value={m(sum.debt)} strong />
+          <Row label="Kassaga tushgan" value={m(sum.cashIn)} />
+          <Row label="Boshlanishi" value={sum.noStart ? `${dmy(sum.startDate)} (sanasiz: ${sum.noStart})` : dmy(sum.startDate)} />
+          <Row label="Tugashi" value={dmy(sum.endDate)} strong />
+          <Row label="Yakuniy to'lov muddati" value={dmy(sum.deadline)} />
+          <div className="block-t" style={{ marginTop: 10 }}>🏦 Tashqariga</div>
+          <Row label="Kerak" value={m(sum.extToTransfer)} />
+          <Row label="O'tkazilgan" value={m(sum.extTransferred)} />
+          <Row label="Qolgan" value={m(sum.extBalance)} strong />
+          {sum.extBalance > 0 && <button className="btn primary wide" onClick={transfer}>Hammasi o'tkazildi ✓</button>}
+          <div className="block-t" style={{ marginTop: 10 }}>👨‍🏫 Instruktor va foyda</div>
+          <Row label="Instruktorga qolgan" value={m(sum.instrOwed)} />
+          <Row label="Olingan foyda" value={m(sum.receivedProfit)} />
+          <Row label="Kutilgan foyda" value={m(sum.expectedProfit)} />
+        </div>
+      )}
       {list === null ? <Empty text="Yuklanmoqda…" /> : list.length === 0 ? <Empty text="Guruhda o'quvchi yo'q" /> : (
         list.map((s) => (
           <div key={s.id}>
