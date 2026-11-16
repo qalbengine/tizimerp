@@ -1,0 +1,116 @@
+{
+ "_izoh": "name ni xohlagancha o'zgartiring. bothStagesToRow gacha (shu qator ham) 2 ta tashqi o'tkazma o'tgan, undan keyingilarda faqat 1-bosqich. Qatorlar = Sheet'dagi qator raqami.",
+ "bothStagesToRow": 140,
+ "groups": [
+  {
+   "from": 2,
+   "to": 12,
+   "name": "12-26"
+  },
+  {
+   "from": 13,
+   "to": 21,
+   "name": "13-26"
+  },
+  {
+   "from": 22,
+   "to": 28,
+   "name": "28-26"
+  },
+  {
+   "from": 29,
+   "to": 39,
+   "name": "Guruh 29-39"
+  },
+  {
+   "from": 40,
+   "to": 46,
+   "name": "Guruh 40-46"
+  },
+  {
+   "from": 47,
+   "to": 56,
+   "name": "Guruh 47-56"
+  },
+  {
+   "from": 57,
+   "to": 63,
+   "name": "Guruh 57-63"
+  },
+  {
+   "from": 64,
+   "to": 71,
+   "name": "Guruh 64-71"
+  },
+  {
+   "from": 72,
+   "to": 82,
+   "name": "Guruh 72-82"
+  },
+  {
+   "from": 83,
+   "to": 92,
+   "name": "Guruh 83-92"
+  },
+  {
+   "from": 93,
+   "to": 107,
+   "name": "Guruh 93-107"
+  },
+  {
+   "from": 108,
+   "to": 122,
+   "name": "61-16"
+  },
+  {
+   "from": 123,
+   "to": 129,
+   "name": "Guruh 123-129"
+  },
+  {
+   "from": 130,
+   "to": 140,
+   "name": "Guruh 130-140"
+  },
+  {
+   "from": 141,
+   "to": 157,
+   "name": "Guruh 141-157"
+  },
+  {
+   "from": 158,
+   "to": 164,
+   "name": "Guruh 158-164"
+  },
+  {
+   "from": 165,
+   "to": 180,
+   "name": "Guruh 165-180"
+  },
+  {
+   "from": 181,
+   "to": 185,
+   "name": "Guruh 181-185"
+  },
+  {
+   "from": 186,
+   "to": 195,
+   "name": "Guruh 186-195"
+  },
+  {
+   "from": 196,
+   "to": 201,
+   "name": "Guruh 196-201"
+  },
+  {
+   "from": 202,
+   "to": 206,
+   "name": "Guruh 202-206"
+  },
+  {
+   "from": 207,
+   "to": 216,
+   "name": "Guruh 207-216"
+  }
+ ]
+}
