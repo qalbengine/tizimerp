@@ -44,6 +44,8 @@ function calc(s, payments = []) {
     stage2: { due: s.extStage2, paid: p2, active: s.docApproved },
     restPart: { due: Math.max(rest, 0), paid: pr },
     extReceived,
+    extT1: Math.min(s.externalTransferred, p1),
+    extT2: Math.min(Math.max(s.externalTransferred - p1, 0), p2),
     extToTransfer: Math.max(extReceived - s.externalTransferred, 0),
     centerIncome,
     expectedProfit: net - s.extStage1 - s.extStage2 - s.instructorShare,
@@ -57,8 +59,12 @@ function summarize(students) {
     count: students.length, cashIn: 0, extToTransfer: 0, extTransferred: 0,
     centerIncome: 0, instrAccrued: 0, instrPaid: 0, discounts: 0, expectedProfit: 0, receivedProfit: 0, debt: 0,
   };
+  r.ext1 = { due: 0, paid: 0, transferred: 0 };
+  r.ext2 = { due: 0, paid: 0, transferred: 0 };
   for (const s of students) {
     const c = calc(s, s.payments);
+    r.ext1.due += s.extStage1; r.ext1.paid += c.stage1.paid; r.ext1.transferred += c.extT1;
+    r.ext2.due += s.extStage2; r.ext2.paid += c.stage2.paid; r.ext2.transferred += c.extT2;
     r.cashIn += c.paid;
     r.extToTransfer += c.extReceived;
     r.extTransferred += s.externalTransferred;

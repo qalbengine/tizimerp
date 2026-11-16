@@ -119,3 +119,5 @@ main { flex: 1; overflow-y: auto; padding-bottom: 8px; }
 .rcard.blue .rcard-v{color:#2a7de1}
 .block-t{font-weight:600;margin-bottom:6px}
 .hint{font-size:12px;opacity:.6;margin:8px 2px 16px}
+
+.stage{padding:6px 0;border-bottom:1px solid rgba(128,128,128,.2)}

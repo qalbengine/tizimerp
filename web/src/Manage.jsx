@@ -42,6 +42,8 @@ function GroupView({ g, me, onBack }) {
           <Row label="Tugashi" value={dmy(sum.endDate)} strong />
           <Row label="Yakuniy to'lov muddati" value={dmy(sum.deadline)} />
           <div className="block-t" style={{ marginTop: 10 }}>🏦 Tashqariga</div>
+          <Row label="1-bosqich: tushgan / jami" value={`${fmt(sum.ext1.paid)} / ${fmt(sum.ext1.due)}`} />
+          <Row label="2-bosqich: tushgan / jami" value={`${fmt(sum.ext2.paid)} / ${fmt(sum.ext2.due)}`} />
           <Row label="Kerak" value={m(sum.extToTransfer)} />
           <Row label="O'tkazilgan" value={m(sum.extTransferred)} />
           <Row label="Qolgan" value={m(sum.extBalance)} strong />

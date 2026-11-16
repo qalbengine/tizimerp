@@ -36,10 +36,16 @@ export default function Report() {
           </div>
 
           <div className="block">
-            <div className="block-t">🏦 Tashqariga (tashqi to'lov)</div>
-            <Row label="O'tkazilishi kerak" value={m(r.extToTransfer)} />
-            <Row label="O'tkazilgan" value={m(r.extTransferred)} />
-            <Row label="Hali o'tkazilmagan" value={m(r.extBalance)} strong />
+            <div className="block-t">🏦 Tashqi to'lov (2 bosqich)</div>
+            {[['1-bosqich (boshida)', r.ext1], ['2-bosqich (hujjat tasdiqlangach)', r.ext2]].map(([label, e]) => (
+              <div key={label} className="stage">
+                <div className="kv"><span><b>{label}</b></span><span>{fmt(e.paid)} / {fmt(e.due)}</span></div>
+                <Row label="Hali tushmagan (qarz)" value={m(e.due - e.paid)} />
+                <Row label="O'tkazilgan" value={m(e.transferred)} />
+                <Row label="O'tkazilishi kerak" value={m(e.paid - e.transferred)} strong />
+              </div>
+            ))}
+            <Row label="Jami o'tkazilishi kerak" value={m(r.extBalance)} strong />
           </div>
 
           <div className="block">

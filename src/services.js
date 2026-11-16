@@ -246,7 +246,9 @@ function formatReport(r) {
   return [
     `💰 Kassaga tushgan: ${F.fmt(r.cashInPeriod)}`,
     ``,
-    `🏦 Tashqariga: kerak ${F.fmt(r.extToTransfer)}, o'tkazilgan ${F.fmt(r.extTransferred)}, qolgan ${F.fmt(r.extBalance)}`,
+    `🏦 1-tashqi to'lov: tushgan ${F.fmt(r.ext1.paid)} / ${F.fmt(r.ext1.due)}, o'tkazilgan ${F.fmt(r.ext1.transferred)}`,
+    `🏦 2-tashqi to'lov: tushgan ${F.fmt(r.ext2.paid)} / ${F.fmt(r.ext2.due)}, o'tkazilgan ${F.fmt(r.ext2.transferred)}`,
+    `🏦 Jami tashqariga: kerak ${F.fmt(r.extToTransfer)}, o'tkazilgan ${F.fmt(r.extTransferred)}, qolgan ${F.fmt(r.extBalance)}`,
     `👨‍🏫 Instruktor: hisoblangan ${F.fmt(r.instrAccrued)}, to'langan ${F.fmt(r.instrPaid)}, qolgan ${F.fmt(r.instrOwed)}`,
     ``,
     `📈 Markazda qolgan: ${F.fmt(r.centerIncome)}`,
