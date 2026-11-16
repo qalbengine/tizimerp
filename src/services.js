@@ -206,16 +206,17 @@ async function report(from, to) {
 
 function formatReport(r) {
   return [
-    `Kassaga tushgan (davrda): ${F.fmt(r.cashInPeriod)}`,
-    `Tashqariga o'tkazilishi kerak: ${F.fmt(r.extToTransfer)}`,
-    `Tashqariga o'tkazilgan: ${F.fmt(r.extTransferred)}`,
-    `Instruktorga hisoblangan: ${F.fmt(r.instrAccrued)}`,
-    `Instruktorga to'langan: ${F.fmt(r.instrPaid)}`,
-    `Chegirmalar jami: ${F.fmt(r.discounts)}`,
-    `Kutilgan foyda: ${F.fmt(r.expectedProfit)}`,
-    `Olingan foyda: ${F.fmt(r.receivedProfit)}`,
-    `Qarz: ${F.fmt(r.debt)}`,
-    `O'quvchilar: ${r.count}`,
+    `💰 Kassaga tushgan: ${F.fmt(r.cashInPeriod)}`,
+    ``,
+    `🏦 Tashqariga: kerak ${F.fmt(r.extToTransfer)}, o'tkazilgan ${F.fmt(r.extTransferred)}, qolgan ${F.fmt(r.extBalance)}`,
+    `👨‍🏫 Instruktor: hisoblangan ${F.fmt(r.instrAccrued)}, to'langan ${F.fmt(r.instrPaid)}, qolgan ${F.fmt(r.instrOwed)}`,
+    ``,
+    `📈 Markazda qolgan: ${F.fmt(r.centerIncome)}`,
+    `✅ Olingan foyda (to'langan instruktor ayirilgan): ${F.fmt(r.receivedProfit)}`,
+    `🎯 Kutilgan foyda (hammasi to'lansa): ${F.fmt(r.expectedProfit)}`,
+    `🔻 Chegirmalar: ${F.fmt(r.discounts)}`,
+    `⚠️ Qarz: ${F.fmt(r.debt)}`,
+    `👥 O'quvchilar: ${r.count}`,
   ].join('\n');
 }
 

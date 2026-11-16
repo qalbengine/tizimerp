@@ -47,7 +47,7 @@ function calc(s, payments = []) {
     extToTransfer: Math.max(extReceived - s.externalTransferred, 0),
     centerIncome,
     expectedProfit: net - s.extStage1 - s.extStage2 - s.instructorShare,
-    receivedProfit: centerIncome - s.instructorShare,
+    receivedProfit: centerIncome - (s.instructorPaid ? s.instructorShare : 0),
   };
 }
 
@@ -55,7 +55,7 @@ function calc(s, payments = []) {
 function summarize(students) {
   const r = {
     count: students.length, cashIn: 0, extToTransfer: 0, extTransferred: 0,
-    instrAccrued: 0, instrPaid: 0, discounts: 0, expectedProfit: 0, receivedProfit: 0, debt: 0,
+    centerIncome: 0, instrAccrued: 0, instrPaid: 0, discounts: 0, expectedProfit: 0, receivedProfit: 0, debt: 0,
   };
   for (const s of students) {
     const c = calc(s, s.payments);
@@ -64,11 +64,14 @@ function summarize(students) {
     r.extTransferred += s.externalTransferred;
     r.instrAccrued += s.instructorShare;
     if (s.instructorPaid) r.instrPaid += s.instructorShare;
+    r.centerIncome += c.centerIncome;
     r.discounts += s.discount;
     r.expectedProfit += c.expectedProfit;
     r.receivedProfit += c.receivedProfit;
     r.debt += c.debt;
   }
+  r.extBalance = r.extToTransfer - r.extTransferred;
+  r.instrOwed = r.instrAccrued - r.instrPaid;
   return r;
 }
 
