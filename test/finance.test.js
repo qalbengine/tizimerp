@@ -34,3 +34,11 @@ test('muddatlar', () => {
   const st = new Date(2026, 0, 10);
   assert.equal(F.calcEnd(st).toDateString(), new Date(2026, 2, 25).toDateString());
 });
+
+test('summarize: tashqi to\'lov 2 bosqich bo\'yicha', () => {
+  const s = { total: 5.5 * M, discount: 0, extStage1: 1 * M, extStage2: 1 * M, instructorShare: 0.5 * M, docApproved: true,
+    instructorPaid: false, externalTransferred: 1.5 * M, payments: [{ status: 'ACTIVE', amount: 1.8 * M }] };
+  const r = F.summarize([s]);
+  assert.deepEqual(r.ext1, { due: 1 * M, paid: 1 * M, transferred: 1 * M });
+  assert.deepEqual(r.ext2, { due: 1 * M, paid: 0.8 * M, transferred: 0.5 * M });
+});

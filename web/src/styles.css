@@ -203,3 +203,23 @@ body { font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, sans-se
   .modal { width: 520px; max-height: 88%; border-radius: 14px; }
   .selbar { left: 50%; right: auto; transform: translateX(-50%); width: min(640px, 100%); border-radius: 12px; }
 }
+
+/* ---- Hisobot: davr paneli, jadval, guruh kartalari ---- */
+.pbar { margin-bottom: 4px; }
+.pnav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -2px 0 10px; }
+.pnav b { font-size: 15px; }
+.pnav .btn { width: 40px; padding: 7px 0; font-size: 18px; line-height: 1; }
+.rcard.add { border: 1px dashed var(--btn); color: var(--btn); background: transparent; font: inherit; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+.rcard.add .plus { font-size: 22px; line-height: 1; }
+.block.warn { border-color: var(--red); }
+.rtable { margin-top: 6px; overflow-x: auto; }
+.rrow { display: grid; grid-template-columns: minmax(86px, 1.4fr) repeat(auto-fit, minmax(60px, 1fr)); gap: 6px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; min-width: 0; }
+.rrow:last-child { border-bottom: 0; }
+.rrow span { text-align: right; white-space: nowrap; }
+.rrow span:first-child { text-align: left; color: var(--hint); }
+.rhead { color: var(--hint); font-size: 11px; }
+.gcard-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.gcard-side { text-align: right; flex: none; }
+.gcard-body { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
+.gcard-body .block-t { margin: 10px 0 4px; }
+@media (min-width: 700px) { .rgrid { grid-template-columns: repeat(4, 1fr); } }

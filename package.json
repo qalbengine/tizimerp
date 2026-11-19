@@ -7,7 +7,7 @@
     "start": "node bot.js",
     "migrate": "prisma migrate deploy",
     "seed": "node prisma/seed.js",
-    "test": "node --test test/finance.test.js test/receipt.test.js test/web.test.js test/reminders.test.js test/studentLogic.test.js",
+    "test": "node --test test/finance.test.js test/receipt.test.js test/web.test.js test/reminders.test.js test/studentLogic.test.js test/reports.test.js test/periods.test.js",
     "test:e2e": "node test/e2e.js",
     "postinstall": "prisma generate",
     "build": "npm --prefix web install --include=dev && npm --prefix web run build",

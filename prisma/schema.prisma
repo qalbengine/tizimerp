@@ -126,3 +126,19 @@ model AuditLog {
 
   @@index([entity, entityId])
 }
+
+// Xarajatlar (ijara, maosh, yoqilg'i ...). Bekor qilinsa o'chirilmaydi, cancelledAt qo'yiladi.
+model Expense {
+  id           Int       @id @default(autoincrement())
+  amount       Int
+  category     String
+  note         String?
+  spentAt      DateTime  @default(now())
+  createdBy    BigInt
+  createdAt    DateTime  @default(now())
+  cancelledAt  DateTime?
+  cancelledBy  BigInt?
+  cancelReason String?
+
+  @@index([spentAt])
+}

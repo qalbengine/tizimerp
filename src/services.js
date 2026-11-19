@@ -150,21 +150,7 @@ async function groupSummary(groupId) {
   const group = await prisma.group.findFirst({ where: { id: groupId } });
   if (!group) throw err('NOT_FOUND', 'Guruh topilmadi');
   const list = await prisma.student.findMany({ where: { groupId, deletedAt: null }, include: { payments: true } });
-  const now = new Date();
-  const r = { ...F.summarize(list), id: group.id, name: group.name, paidFull: 0, inDebt: 0, overdue: 0, noStart: 0,
-    startDate: null, endDate: null, deadline: null };
-  const max = (a, b) => (!a || (b && b > a) ? b : a);
-  const min = (a, b) => (!a || (b && b < a) ? b : a);
-  for (const s of list) {
-    const c = F.calc(s, s.payments);
-    if (c.debt === 0) r.paidFull++; else r.inDebt++;
-    if (c.debt > 0 && s.deadline && s.deadline < now) r.overdue++;
-    if (!s.startDate) r.noStart++;
-    r.startDate = min(r.startDate, s.startDate);
-    r.endDate = max(r.endDate, s.endDate);
-    r.deadline = max(r.deadline, s.deadline);
-  }
-  return r;
+  return { ...F.summarize(list), ...F.groupStats(list), id: group.id, name: group.name };
 }
 
 async function setGroupStartDate(actor, groupId, startDate) {
@@ -287,7 +273,7 @@ async function searchStudents(q, { instructorId = null, limit = 10 } = {}) {
 }
 
 // Web ilova uchun ro'yxat: filter = all | grouped | ungrouped | debtors
-async function listStudents({ q = '', filter = 'all', groupId = null, instructorId = null, limit = 300 } = {}) {
+async function listStudents({ q = '', filter = 'all', groupId = null, instructorId = null, limit = 1000 } = {}) {
   const where = { deletedAt: null, status: 'ACTIVE' };
   if (instructorId) where.instructorId = instructorId;
   if (filter === 'ungrouped') where.groupId = null;

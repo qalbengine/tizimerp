@@ -2,6 +2,7 @@
 // Admin amallari (to'lov, chek, hujjat, chegirma, sana, guruh, o'chirish) va ro'yxatlar.
 const { Markup } = require('telegraf');
 const S = require('./services');
+const Rep = require('./reports');
 const F = require('./finance');
 const U = require('./util');
 const R = require('./receiptPdf');
@@ -318,7 +319,7 @@ module.exports = function registerActions(bot) {
     } else if (ctx.match[1] === 'month') {
       from = new Date(now.getFullYear(), now.getMonth(), 1); to = new Date(now.getFullYear(), now.getMonth() + 1, 1); name = 'Shu oy';
     } else { from = new Date(2000, 0, 1); to = new Date(2100, 0, 1); name = 'Hammasi'; }
-    const r = await S.report(from, to);
-    return ctx.reply(`Hisobot: ${name}\n(o'quvchi qatorlari shu davrda ro'yxatga olinganlar bo'yicha)\n\n` + S.formatReport(r));
+    const r = await Rep.overview(from, to, 'day');
+    return ctx.reply(`Hisobot: ${name}\n\n` + Rep.formatOverview(r));
   }));
 };

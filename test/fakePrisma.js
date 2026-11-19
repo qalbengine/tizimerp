@@ -1,8 +1,8 @@
 // Sinov uchun xotiradagi soxta Prisma (haqiqiy bazasiz)
 // Soxta (in-memory) Prisma bilan bot oqimlarini sinash
 const Module = require("module");
-const db = { tariff: [], student: [], payment: [], instructor: [], group: [], audit: [] };
-const nid = { student: 1, payment: 1, instructor: 1, group: 1, audit: 1 };
+const db = { tariff: [], student: [], payment: [], instructor: [], group: [], audit: [], expense: [] };
+const nid = { student: 1, payment: 1, instructor: 1, group: 1, audit: 1, expense: 1 };
 const M = 1_000_000;
 db.tariff = [
   { category: 'B', total: 5.5 * M, extStage1: M, extStage2: M, instructorShare: 0.5 * M },
@@ -51,7 +51,10 @@ const tbl = (name, defaults = () => ({})) => ({
   },
 });
 const fake = {
-  tariff: { findUnique: async ({ where }) => db.tariff.find((t) => t.category === where.category) || null },
+  tariff: {
+    findUnique: async ({ where }) => db.tariff.find((t) => t.category === where.category) || null,
+    findMany: async () => [...db.tariff].sort((a, b) => a.category.localeCompare(b.category)),
+  },
   student: { ...tbl('student', () => ({ status: 'ACTIVE', discount: 0, docApproved: false, externalTransferred: 0, instructorPaid: false, deletedAt: null, startDate: null, endDate: null, groupId: null, instructorId: null, phone2: null })),
     updateMany: async ({ where, data }) => { const rows = db.student.filter((x) => m(x, where)); rows.forEach((r) => Object.assign(r, data)); return { count: rows.length }; } },
   payment: { ...tbl('payment', () => ({ status: 'ACTIVE', paidAt: new Date(), note: null })),
@@ -59,7 +62,12 @@ const fake = {
   instructor: { ...tbl('instructor', () => ({ active: true })),
     findMany: async () => db.instructor.map((i) => ({ ...i, students: db.student.filter((s) => s.instructorId === i.id && !s.deletedAt) })) },
   group: { ...tbl('group'), findMany: async () => db.group.map((g) => ({ ...g, _count: { students: db.student.filter((s) => s.groupId === g.id && !s.deletedAt).length } })) },
-  auditLog: { create: async ({ data }) => { db.audit.push(data); return data; }, createMany: async ({ data }) => { db.audit.push(...data); return { count: data.length }; } },
+  expense: tbl('expense', () => ({ cancelledAt: null, note: null, spentAt: new Date() })),
+  auditLog: {
+    create: async ({ data }) => { db.audit.push({ ...data, createdAt: new Date() }); return data; },
+    createMany: async ({ data }) => { db.audit.push(...data.map((d) => ({ ...d, createdAt: new Date() }))); return { count: data.length }; },
+    findFirst: async ({ where }) => db.audit.find((a) => m(a, where)) || null,
+  },
   $transaction: async (fn) => fn(fake),
   $disconnect: async () => {},
 };

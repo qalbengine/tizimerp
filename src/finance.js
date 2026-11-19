@@ -22,6 +22,20 @@ const calcEnd = (start) => addDays(addMonths(start, 2), 15);   // boshlanish + 2
 const calcDeadline = (reg) => addDays(addMonths(reg, 2), 25);  // ro'yxat + 2 oy 25 kun
 const maxStart = (reg) => addDays(reg, 10);                     // boshlanish ko'pi bilan +10 kun
 
+// Har bir to'lovni "tashqi" va "markazda qoladigan" qismga bo'ladi (tartib: eski to'lov birinchi).
+// Jami har doim calc() dagi extReceived / centerIncome ga teng.
+function allocate(s, payments = []) {
+  let eLeft = s.extStage1 + s.extStage2;
+  let cLeft = Math.max(s.total - s.discount - s.extStage1 - s.extStage2, 0);
+  return payments.filter((p) => p.status === 'ACTIVE')
+    .sort((a, b) => new Date(a.paidAt) - new Date(b.paidAt) || a.id - b.id)
+    .map((p) => {
+      const ext = Math.min(p.amount, eLeft); eLeft -= ext;
+      const center = Math.min(p.amount - ext, cLeft); cLeft -= center;
+      return { id: p.id, paidAt: p.paidAt, amount: p.amount, ext, center };
+    });
+}
+
 // s: Student, payments: Payment[]
 function calc(s, payments = []) {
   const paid = payments.filter((p) => p.status === 'ACTIVE').reduce((a, p) => a + p.amount, 0);
@@ -54,10 +68,27 @@ function calc(s, payments = []) {
 }
 
 // students: [{...student, payments: []}]
+// Guruh (yoki istalgan ro'yxat) bo'yicha sanoq: to'liq to'laganlar, qarzdorlar, muddati o'tganlar, sanalar
+function groupStats(list, now = new Date()) {
+  const r = { paidFull: 0, inDebt: 0, overdue: 0, noStart: 0, startDate: null, endDate: null, deadline: null };
+  const max = (a, b) => (!a || (b && b > a) ? b : a);
+  const min = (a, b) => (!a || (b && b < a) ? b : a);
+  for (const s of list) {
+    const c = calc(s, s.payments);
+    if (c.debt === 0) r.paidFull++; else r.inDebt++;
+    if (c.debt > 0 && s.deadline && s.deadline < now) r.overdue++;
+    if (!s.startDate) r.noStart++;
+    r.startDate = min(r.startDate, s.startDate);
+    r.endDate = max(r.endDate, s.endDate);
+    r.deadline = max(r.deadline, s.deadline);
+  }
+  return r;
+}
+
 function summarize(students) {
   const r = {
     count: students.length, cashIn: 0, extToTransfer: 0, extTransferred: 0,
-    centerIncome: 0, instrAccrued: 0, instrPaid: 0, discounts: 0, expectedProfit: 0, receivedProfit: 0, debt: 0,
+    centerIncome: 0, discountCount: 0, instrAccrued: 0, instrPaid: 0, discounts: 0, expectedProfit: 0, receivedProfit: 0, debt: 0,
   };
   r.ext1 = { due: 0, paid: 0, transferred: 0 };
   r.ext2 = { due: 0, paid: 0, transferred: 0 };
@@ -72,6 +103,7 @@ function summarize(students) {
     if (s.instructorPaid) r.instrPaid += s.instructorShare;
     r.centerIncome += c.centerIncome;
     r.discounts += s.discount;
+    if (s.discount > 0) r.discountCount++;
     r.expectedProfit += c.expectedProfit;
     r.receivedProfit += c.receivedProfit;
     r.debt += c.debt;
@@ -83,4 +115,4 @@ function summarize(students) {
 
 const fmt = (n) => new Intl.NumberFormat('ru-RU').format(n) + " so'm";
 
-module.exports = { MIN_REGISTRATION_PAYMENT, addMonths, addDays, calcEnd, calcDeadline, maxStart, calc, summarize, fmt };
+module.exports = { MIN_REGISTRATION_PAYMENT, addMonths, addDays, calcEnd, calcDeadline, maxStart, calc, allocate, groupStats, summarize, fmt };

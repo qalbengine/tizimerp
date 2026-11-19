@@ -6,6 +6,7 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const S = require('./services');
+const Rep = require('./reports');
 const F = require('./finance');
 const R = require('./receiptPdf');
 
@@ -271,6 +272,25 @@ function createWeb(bot) {
     else { from = new Date(now.getFullYear(), now.getMonth(), 1); to = new Date(now.getFullYear(), now.getMonth() + 1, 1); }
     res.json(await S.report(from, to));
   }));
+
+  // ---- Hisobotlar (davr: from/to = YYYY-MM-DD, to oxirgi kundan keyingi kun) ----
+  const span = (req) => {
+    const from = ymd(req.query.from); const to = ymd(req.query.to);
+    if (to <= from) throw err('BAD_DATE', "Davr noto'g'ri");
+    return [from, to];
+  };
+  const byOf = (req) => (['day', 'week', 'month'].includes(req.query.by) ? req.query.by : 'day');
+  api.get('/report/overview', adminOnly, h(async (req, res) => res.json(await Rep.overview(...span(req), byOf(req)))));
+  api.get('/report/groups', adminOnly, h(async (req, res) => res.json(await Rep.groupsReport())));
+  api.get('/report/instructors', adminOnly, h(async (req, res) => res.json(await Rep.instructorsReport(...span(req), byOf(req)))));
+  api.get('/expenses', adminOnly, h(async (req, res) => res.json(await Rep.listExpenses(...span(req)))));
+  api.post('/expenses', adminOnly, h(async (req, res) => {
+    const b = req.body || {};
+    const e = await Rep.addExpense(req.me.id, { amount: int(b.amount, 'Summa'), category: String(b.category || ''), note: b.note, spentAt: b.date ? ymd(b.date) : new Date() });
+    res.json({ id: e.id });
+  }));
+  api.post('/expenses/:id/cancel', adminOnly, h(async (req, res) => res.json(await Rep.cancelExpense(req.me.id, int(req.params.id, 'Xarajat'), req.body && req.body.reason))));
+  api.post('/groups/:id/instructor-paid', adminOnly, h(async (req, res) => res.json(await Rep.markGroupInstructorPaid(req.me.id, int(req.params.id, 'Guruh')))));
 
   // ---- Guruhlar ----
   api.get('/groups', h(async (req, res) => {

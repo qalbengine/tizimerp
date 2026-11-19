@@ -127,7 +127,9 @@ async function main() {
     }
     const line = `#${n} ${fullName.padEnd(26)} ${phone}${phone2 ? '/' + phone2 : ''} narx ${price} to'langan ${paid} (${pays.length} to'lov) chegirma ${discount} qarz ${Math.max(price - paid, 0)} sana ${registeredAt.toISOString().slice(0, 10)} guruh ${gname || '—'} o'tkazilgan ${ext}${note}`;
     if (!APPLY) { console.log('• ' + line); ok++; continue; }
-    const dup = await prisma.student.findFirst({ where: { deletedAt: null, OR: [{ phone }, { phone2: phone }] } });
+    // Bir telefon bir necha o'quvchida bo'lishi mumkin (oila): telefon VA ism bir xil bo'lsagina "bor" deymiz
+    const sameNum = await prisma.student.findMany({ where: { deletedAt: null, OR: [{ phone }, { phone2: phone }] } });
+    const dup = sameNum.find((x) => norm(x.fullName) === norm(fullName)) || null;
     if (dup && UPDATE) {
       const g = await getGroup(gname);
       await prisma.student.update({ where: { id: dup.id }, data: { groupId: g ? g.id : dup.groupId, externalTransferred: ext } });
