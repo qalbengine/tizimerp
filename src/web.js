@@ -59,6 +59,19 @@ function decodeImage(dataUrl) {
 }
 const pick = (obj, keys) => Object.fromEntries(keys.filter((k) => obj && obj[k] !== undefined).map((k) => [k, obj[k]]));
 
+// ---- CSV (Excel ochadi): UTF-8 BOM + ';' ----
+function csvCell(v) {
+  const s = v === null || v === undefined ? '' : String(v);
+  return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+const dmyStr = (d) => { if (!d) return ''; const x = new Date(d); const p = (n) => String(n).padStart(2, '0'); return `${p(x.getDate())}.${p(x.getMonth() + 1)}.${x.getFullYear()}`; };
+function studentsCsv(list) {
+  const head = ['ID', 'F.I.O.', 'Telefon', 'Qoshimcha telefon', 'Kategoriya', 'Guruh', 'Instruktor', 'Royxat sanasi', 'Kurs narxi', 'Tolangan', 'Qoldiq qarz', 'Tolov muddati'];
+  const rows = list.map((s) => [s.id, s.fullName, s.phone, s.phone2, s.category, s.group && s.group.name, s.instructor && s.instructor.name,
+    dmyStr(s.registeredAt), s.net, s.paid, s.debt, dmyStr(s.deadline)]);
+  return '\uFEFF' + [head, ...rows].map((r) => r.map(csvCell).join(';')).join('\r\n');
+}
+
 // ---- DTO ----
 function studentDto(s, role, { light = false } = {}) {
   const c = F.calc(s, s.payments || []);
@@ -138,6 +151,15 @@ function createWeb(bot) {
       groupId: req.query.groupId ? int(req.query.groupId) : null, instructorId: iid(req),
     });
     res.json(list.map((s) => studentDto(s, req.me.role, { light: true })));
+  }));
+
+  api.post('/students/export', adminOnly, h(async (req, res) => {
+    const ids = new Set((req.body.ids || []).map((x) => int(x, 'ID')));
+    if (!ids.size) throw err('BAD_INPUT', "O'quvchi tanlanmagan");
+    const list = (await S.listStudents({ filter: 'all' })).filter((s) => ids.has(s.id)).map((s) => studentDto(s, 'admin', { light: true }));
+    const name = `oquvchilar-${new Date().toISOString().slice(0, 10)}.csv`;
+    await bot.telegram.sendDocument(req.me.id, { source: Buffer.from(studentsCsv(list), 'utf8'), filename: name }, { caption: `${list.length} ta o'quvchi` });
+    res.json({ ok: true, count: list.length });
   }));
 
   api.post('/students/assign-group', adminOnly, h(async (req, res) => {

@@ -80,3 +80,25 @@ export function Row({ label, value, strong }) {
 export function Empty({ text, icon }) {
   return <div className="empty">{icon && <div className="empty-icon">{icon}</div>}{text}</div>;
 }
+
+// Pul formati: bitta joyda. Valyuta nomini o'zgartirish uchun CURRENCY ni almashtiring (masalan 'UZS').
+export const CURRENCY = "so'm";
+export const money = (n) => `${fmt(n)} ${CURRENCY}`;
+
+export function Skeleton({ rows = 5 }) {
+  return (
+    <div aria-busy="true" aria-label="Yuklanmoqda">
+      {Array.from({ length: rows }, (_, i) => <div key={i} className="skel" />)}
+    </div>
+  );
+}
+
+export function ErrorState({ text, onRetry }) {
+  return (
+    <div className="empty" role="alert">
+      <div className="empty-icon">⚠️</div>
+      {text}
+      {onRetry && <div><button className="btn sm" style={{ marginTop: 10 }} onClick={onRetry}>Qayta urinish</button></div>}
+    </div>
+  );
+}

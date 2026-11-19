@@ -114,6 +114,15 @@ test('guruhlar: yaratish va ommaviy biriktirish', async () => {
   const tr = await call(A, 'POST', `/groups/${g.body.id}/transfer`);
   assert.equal(tr.body.amount, need);
   assert.equal((await call(A, 'GET', `/groups/${g.body.id}/summary`)).body.extBalance, 0);
+  const before = sent.length;
+  const ex = await call(A, 'POST', '/students/export', { ids: gs.body.count ? un.body.map((s) => s.id) : [] });
+  assert.equal(ex.status, 200); assert.equal(ex.body.count, 2);
+  const docMsg = sent.slice(before).find((m) => m[0] === 'doc');
+  assert.ok(docMsg, 'CSV hujjat yuborildi');
+  const csv = docMsg[2].source.toString('utf8');
+  assert.ok(csv.startsWith('\uFEFFID;F.I.O.;'), 'BOM + sarlavha'); assert.equal(csv.split('\r\n').length, 3);
+  assert.equal((await call(I, 'POST', '/students/export', { ids: [1] })).status, 403);
+  assert.equal((await call(A, 'POST', '/students/export', { ids: [] })).status, 400);
   assert.equal((await call(A, 'POST', `/groups/${g.body.id}/transfer`)).body.amount, 0, 'ikkinchi marta 0');
   assert.equal((await call(I, 'GET', `/groups/${g.body.id}/summary`)).status, 403);
   assert.ok(b.student.id);
