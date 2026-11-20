@@ -8,6 +8,7 @@ const registerStudents = require('./src/students');
 const S = require('./src/services');
 const { createWeb } = require('./src/web');
 const Rem = require('./src/reminders');
+const { ensureSchema } = require('./src/ensureSchema');
 
 if (!process.env.BOT_TOKEN) throw new Error('BOT_TOKEN yo\'q (.env)');
 process.env.TZ = process.env.TZ || 'Asia/Tashkent';
@@ -80,6 +81,8 @@ if (require.main === module) {
   const stop = (sig) => { reminders.stop(); server.close(); bot.stop(sig); S.prisma.$disconnect(); };
   process.once('SIGINT', () => stop('SIGINT'));
   process.once('SIGTERM', () => stop('SIGTERM'));
+
+  ensureSchema(S.prisma).catch((e) => console.error('Jadvalni tekshirib bo\'lmadi:', e.message));
 
   bot.launch({}, async () => {
     console.log('Bot: polling rejimi');
