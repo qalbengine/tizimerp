@@ -8,7 +8,28 @@ const registerStudents = require('./src/students');
 const S = require('./src/services');
 const { createWeb } = require('./src/web');
 const Rem = require('./src/reminders');
-const { ensureSchema } = require('./src/ensureSchema');
+// Migratsiya ishlamagan bo'lsa ham Expense jadvali yaratilib qoladi (xavfsiz, qayta ishlatsa bo'ladi).
+const SCHEMA_SQL = [
+  `CREATE TABLE IF NOT EXISTS "Expense" (
+    "id" SERIAL NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "category" TEXT NOT NULL,
+    "note" TEXT,
+    "spentAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdBy" BIGINT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "cancelledAt" TIMESTAMP(3),
+    "cancelledBy" BIGINT,
+    "cancelReason" TEXT,
+    CONSTRAINT "Expense_pkey" PRIMARY KEY ("id")
+  )`,
+  `CREATE INDEX IF NOT EXISTS "Expense_spentAt_idx" ON "Expense"("spentAt")`,
+];
+async function ensureSchema(prisma) {
+  if (!prisma || typeof prisma.$executeRawUnsafe !== 'function') return;
+  for (const q of SCHEMA_SQL) await prisma.$executeRawUnsafe(q);
+  console.log('Baza: jadvallar tekshirildi');
+}
 
 if (!process.env.BOT_TOKEN) throw new Error('BOT_TOKEN yo\'q (.env)');
 process.env.TZ = process.env.TZ || 'Asia/Tashkent';
